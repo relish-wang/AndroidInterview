@@ -666,6 +666,60 @@ Glide的特点：
 ⑦主线程在收到Message后，通过反射机制创建目标Activity，并回调Activity.onCreate()等方法。
 
 ⑧到此，App便正式启动，开始进入Activity生命周期，执行完onCreate/onStart/onResume方法，UI渲染结束后便可以看到App的主界面。
+
+### 14 如何做内存优化
+
+#### ① 内存泄漏方面
+
+- 错误的单例实现
+- 内部类持有外部类的强引用
+- 资源打开未关闭(Bitmap, IO流)
+
+#### ② 内存抖动方面
+
+- onDraw申请对象
+
+- 循环体申请对象
+
+- RecyclerView/ListView#Adapter申请对象
+
+#### ③ 其他
+
+- 加载大图避免OOM
+
+- 动态广播注册与注销
+
+- 使用SpareArray代替Map\<Integer, Object>(key不需要自动装箱;数据量小的情况下，随机访问效率更高)
+
+- SharedPreferences性能优化: 
+
+  - 不要存放大key和大value。会引起界面卡，频繁GC，占用内存等。
+  - 无关的配置项不要放在一起。文件大了读取效率也会降低(SP本质上是xml文件)
+  
+- 节制的使用Service，当启动一个Service时，系统总是倾向于保留这个Service依赖的进程，这样会造成系统资源的浪费，可以使用IntentService，执行完成任务后会自动停止。
+
+- 当界面不可见时释放内存，可以重写Activity的onTrimMemory()方法，然后监听TRIM_MEMORY_UI_HIDDEN这个级别，这个级别说明用户离开了页面，可以考虑释放内存和资源。
+
+- 避免在Bitmap浪费过多的内存，使用压缩过的图片，也可以使用Fresco等库来优化对Bitmap显示的管理。
+
+- 使用优化过的数据集合SparseArray代替HashMap，HashMap为每个键值都提供一个对象入口，使用SparseArray可以免去基本对象类型转换为引用数据类想的时间。
+
+#### ④ 排查
+
+- Android Profiler
+
+- LeakCanary
+
+### 16 如何针对机型做自定义View的优化
+
+合理使用warp_content，match_parent.
+尽可能的是使用RelativeLayout
+针对不同的机型，使用不同的布局文件放在对应的目录下，android会自动匹配。
+尽量使用点9图片。
+使用与密度无关的像素单位dp，sp
+引入android的百分比布局。
+切图的时候切大分辨率的图，应用到布局当中。在小分辨率的手机上也会有很好的显示效果。
+
 ## 四、手写代码
 
 ### 1 回文数判断(不能用字符串，不能申请额外空间)
@@ -761,7 +815,11 @@ public boolean isPalindrome(int x) {
 
 ## 六、反问的话
 
-// TODO 
+### 客户端团队规模?职责划分？(根据业务线分或基础中台组+多个业务组)
+
+### 贵公司的盈利情况和融资情况
+
+### 为什么有当前应聘岗位？(上一任升职；上一任离职；公司业务拓展确认)
 
 
 
