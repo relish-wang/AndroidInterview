@@ -105,13 +105,19 @@ Cookie和其他有状态机制是后来在单独的RFC中定义的添加内容�
 
 `keep-alive`: 表示客户端想要保持连接打开。HTTP / 1.1请求的默认设置为具有持久连接。标头列表是要由它们之间的第一个非透明代理或高速缓存删除的标头的名称：这些标头定义了发射器与第一个实体（而不是目标节点）之间的连接。
 
+| header           | 说明                  | 归属 |
+| ----------- | ------------------ | |
+| User- Agent | 浏览器信息 | request |
+| Content-Length | Body字节大小 | entity |
+| Accept-Encoding | 可接受的文本压缩算法(gzip, deflate) | request |
+| Cookie | 会话状态管理(4kb、键值对) | request |
+| Host | 请求主机器名(1.1后强制使用)<br>Host: \<host>:\<port>   port可选<br>如果一个 HTTP/1.1 请求缺少 Host 头字段或者设置了超过一个的 Host 头字段，[`400`](https://developer.mozilla.org/zh-CN/docs/Web/HTTP/Status/400)（Bad Request）状态码会被返回 | request |
+|Connection | `close`: 表示无论客户端还是服务端都想要关闭连接。HTTP/1.0请求的默认配置。<br>`keep-alive`: 表示客户端想要保持连接打开。HTTP / 1.1请求的默认设置为具有持久连接。<br>当前的事务完成后，是否会关闭网络连接 | Genaral |
+| Content-Type | 告诉客户端实际返回的内容的内容类型 | entity |
+
 **Host**
 
 域名
-
-**Port**
-
-端口号
 
 - User-Agaent、Content-Length、Host等
 
@@ -138,13 +144,31 @@ Hash算法: MD5、SHA
 
 ### 1 堆排序的实现
 
-// TODO 
+完成二叉树
+
+大根堆：父节点的值大于等于左右子节点值
+
+小根堆：父节点的值小于等于左右子节点值
+
+(以大根堆为例)先构建最大堆：
+
+然后对二叉树进行遍历，把根节点从树上取下来。然后比较左右子树节点，较大的那一边的节点成为二叉树的根节点，剩下的重新构建最大堆。依次操作，最初取节点的顺序所对应的值就是从大到小排列的。
 
 ### 2 二叉树
 
 #### ① 在二叉树中, 已知两个节点的, 如何找到这两个节点的最小公共父节点
 
-// TODO 
+情况一：root未知，但是每个节点都有parent指针
+此时可以分别从两个节点开始，沿着parent指针走向根节点，得到两个链表，然后求两个链表的第一个公共节点，这个方法很简单，不需要详细解释的。
+
+
+
+情况二：节点只有左、右指针，没有parent指针，root已知
+思路：有两种情况，一是要找的这两个节点（a, b），在要遍历的节点（root）的两侧，那么这个节点就是这两个节点的最近公共父节点；
+二是两个节点在同一侧，则 root->left 或者 root->right 为 NULL，另一边返回a或者b。那么另一边返回的就是他们的最小公共父节点。
+递归有两个出口，一是没有找到a或者b，则返回NULL；二是只要碰到a或者b，就立刻返回。
+
+
 
 ## 三、Java
 
@@ -419,8 +443,83 @@ If (hash(x) + 2*2) % S is also full, then we try (hash(x) + 3*3) % S
 #### ③ 为什么会出现内存抖动？如何处理(注意是处理不是预防)
 
 - 定位: android profile|Tools->Android->Android Device Monitor
+- LeakCanary
+- MAT
 
-  
+### 6 NIO和BIO的区别
+
+NIO只需要开启**一个线程**就可以处理来自**多个客户端**的IO事件
+
+### 7 JVM定义了几种线程的状态
+
+NEW、RUNNABLE、BLOCKED、WAITING、TIMED_WAITING、TERMINATED
+
+```
+public enum State {
+    /**
+     * Thread state for a thread which has not yet started.
+     */
+    NEW,
+
+    /**
+     * Thread state for a runnable thread.  A thread in the runnable
+     * state is executing in the Java virtual machine but it may
+     * be waiting for other resources from the operating system
+     * such as processor.
+     */
+    RUNNABLE,
+
+    /**
+     * Thread state for a thread blocked waiting for a monitor lock.
+     * A thread in the blocked state is waiting for a monitor lock
+     * to enter a synchronized block/method or
+     * reenter a synchronized block/method after calling
+     * {@link Object#wait() Object.wait}.
+     */
+    BLOCKED,
+
+    /**
+     * Thread state for a waiting thread.
+     * A thread is in the waiting state due to calling one of the
+     * following methods:
+     * <ul>
+     *   <li>{@link Object#wait() Object.wait} with no timeout</li>
+     *   <li>{@link #join() Thread.join} with no timeout</li>
+     *   <li>{@link LockSupport#park() LockSupport.park}</li>
+     * </ul>
+     *
+     * <p>A thread in the waiting state is waiting for another thread to
+     * perform a particular action.
+     *
+     * For example, a thread that has called <tt>Object.wait()</tt>
+     * on an object is waiting for another thread to call
+     * <tt>Object.notify()</tt> or <tt>Object.notifyAll()</tt> on
+     * that object. A thread that has called <tt>Thread.join()</tt>
+     * is waiting for a specified thread to terminate.
+     */
+    WAITING,
+
+    /**
+     * Thread state for a waiting thread with a specified waiting time.
+     * A thread is in the timed waiting state due to calling one of
+     * the following methods with a specified positive waiting time:
+     * <ul>
+     *   <li>{@link #sleep Thread.sleep}</li>
+     *   <li>{@link Object#wait(long) Object.wait} with timeout</li>
+     *   <li>{@link #join(long) Thread.join} with timeout</li>
+     *   <li>{@link LockSupport#parkNanos LockSupport.parkNanos}</li>
+     *   <li>{@link LockSupport#parkUntil LockSupport.parkUntil}</li>
+     * </ul>
+     */
+    TIMED_WAITING,
+
+    /**
+     * Thread state for a terminated thread.
+     * The thread has completed execution.
+     */
+    TERMINATED;
+}
+```
 
 ## 三、Android
 
@@ -575,7 +674,16 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 - R文件生成在哪一步,了解它的内容结构吗
 - apk里的resuource.arsc有什么用
 
+具体说来：
 
+1. 通过AAPT工具进行资源文件（包括AndroidManifest.xml、布局文件、各种xml资源等）的打包，生成R.java文件。
+2. 通过AIDL工具处理AIDL文件，生成相应的Java文件。
+3. 通过Javac工具编译项目源码，生成Class文件。
+4. 通过DX工具将所有的Class文件转换成DEX文件，该过程主要完成Java字节码转换成Dalvik字节码，压缩常量池以及清除冗余信息等工作。
+5. 通过ApkBuilder工具将资源文件、DEX文件打包生成APK文件。
+6. 利用KeyStore对生成的APK文件进行签名。
+7. 如果是正式版的APK，还会利用ZipAlign工具进行对齐处理，对齐的过程就是将APK文件中所有的资源文件举例文件的起始距离都偏移4字节的整数倍，这样通过内存映射访问APK文件
+    的速度会更快。
 
 #### ② 如何快速优雅地打渠道包(applicationId一致, 仅资源文件不同, 答flavors的不得分)
 
