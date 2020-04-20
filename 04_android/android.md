@@ -15,11 +15,11 @@ suspend关键字的作用: 提醒。提醒调用者，我这个函数需要在�
 
 #### ③ 高阶函数
 
+将函数用作参数或返回值的函数。
 
 #### ④ compaion是个啥
 
 内联对象
-
 
 #### kotlin如何快速创建单例
 
@@ -35,17 +35,27 @@ object类
 
 
 
-### 3 Android/data和data/data区别
+### 3 data/data/[packageName]和Android/data/[packageName]区别
 
-私有目录。
+data/data/[packageName]: 内部储存的私有目录
+Android/data/[packageName]: 外部储存的私有目录(Android Q(10)以前,其他应用也可以访问; Q及其之后只能自己的应用访问)
+
+在App被卸载时，二者都会被移除。
 
 ### 4 Android有哪些创建多线程的方式
-- IntentService是怎么关闭自己创建的线程的
-- HandlerThread
-- Handler/Looper/MessageQueue关系
-	- 一个Looper可以有多个Handler吗？YES
-	- 一个Handler可以发消息给另一个Handler处理吗？不能
-	- Handler可以绑定多个Looper吗？不能
+IntentService、HandlerThread、AsyncTask
+#### IntentService是怎么关闭自己创建的线程的
+stopSelf()
+
+### Handler/Looper/MessageQueue关系
+
+一个Looper->1个MessageQueue->多个Handler
+
+Handler发送消息, 进入MessageQueue, Looper取消息交给对应的Handler处理。
+
+一个Looper可以有多个Handler吗？YES
+一个Handler可以发消息给另一个Handler处理吗？不能
+Handler可以绑定多个Looper吗？不能
 
 ### 5 View绘制与分发
 
@@ -99,25 +109,41 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 #### ④ 简述绘制流程。垂直同步了解吗？16ms刷新了解吗
 
-// TODO
+measure -> layout -> draw
+
+HWComposer每16ms发出的信号, 经由WindowManger->ViewRootImpl->最后触发页面上所有View的draw流程(仅当页面发生变化的情况; 否则不重绘)
 
 #### ⑤ requestLayout()/invalidate()区别
 
-// TODO
+requestLayout: 向上调用指导顶层View。会走layout和measure流程。可能会走draw流程。
+
+invalidate: draw。
 
 #### ⑥ 开启/关闭硬件加速对View绘制有何影响
 
-// TODO
+开启: 将一部分绘制计算工作交给GPU处理(原来是CPU做的)。提搞渲染效率。
+
+有些绘制Api不支持开启硬件加速。即相同的绘制Api在开启/关闭硬件加速的展示效果不同。
 
 #### ⑦ 如何用Drawable优雅地实现自定义View的动画效果
 
-// TODO
+自定义Drawable。重写相应的方法。
 
 #### ⑧ 有没有遇到过页面卡顿？是什么原因造成的？最佳实践？如何排查发生的原因？
 
-// TODO
+Android Profile定位。
 
-#### ⑨ RecyclerView优化
+**假设发现卡顿是因为LayoutInflate加载布局文件引起的, 如何优化？**
+
+1 使用ViewStub延迟加载
+2 使用约束布局/merge+include等方式减少View层级(能使用相同效果的布局优先使用LinearLayout和Fragment而不是RelativeLayout)
+3 `new View()`的形式代替布局文件(省去加载布局文件的IO任务消耗)
+
+**对于`new View()`的方式, 写起来比较繁琐，还有进一步优化的余地吗？**
+
+可以用编译时注解, 针对布局文件自动生成对应的Java代码。解放重复劳动。
+
+#### ⑨ RecyclerView的优化
 
 - 1 `recyclerView.setHasFixedSize(true);`当Item的高度如是固定的，设置这个属性为true可以提高性能，尤其是当RecyclerView有条目插入、删除时性能提升更明显。
 
@@ -131,11 +157,27 @@ public boolean dispatchTouchEvent(MotionEvent ev){
         }
   };
   ```
+- 3 item的布局文件层级不宜过深。复杂的可以使用`new View()`形式
 
+#### RecyclerView如何设置多类型的Item
 
-### 6 Window
+区分viewType
 
-// TODO
+#### RecyclerView如何添加分割线
+
+ItemDecoration
+
+#### 画分割线是在ViewHolder渲染之前还是渲染之后？
+
+onDraw: 之前
+
+onDrawOver: 之后
+
+### 6 WindowManger
+
+WindowMangerService
+
+管理窗口
 
 ### 7 跨进程通信
 
@@ -149,7 +191,7 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 ### 8 JSBridge的原理
 
-// TODO
+定义了一套WebView/JS和Native的通信规则
 
 ### 9 打包流程
 
@@ -172,7 +214,7 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 #### ② 如何快速优雅地打渠道包(applicationId一致, 仅资源文件不同, 答flavors的不得分)
 
-// TODO 
+参看美团的walle方案。
 
 ### 10 Android安全
 
