@@ -9,9 +9,15 @@
 
 suspend关键字的作用: 提醒。提醒调用者，我这个函数需要在协程或另一个挂起函数中被调用。
 
-#### ② kotlin如何判空的？
+#### ② kotlin的空安全是怎么回事？如何判空的？使用kotlin一定不会出现NPE吗？
 
-`?.`操作符
+kotlin将每种类类型定义了两种类型，一种可空类型，一种非可空类型。两种是不同的类型。在对可空类型进行操作的时候，需要对它的空进行额外的判断。可以使用`?.`操作符进行安全调用。非可空类型相当于可空类型的一个子集。非可控类型可以直接赋值给可空类型；反之不行。
+
+以下几种情况会出现NPE:
+- 1 显式调用throw NullPointerException()
+- 2 使用了`!!`的对象是空对象
+- 3 有些数据在初始化时不一致
+- 4 外部Java代码导致(Kotlin没有对Java类型进行判空处理)
 
 #### ③ 高阶函数
 
@@ -27,13 +33,19 @@ object类
 
 ### 2 网络
 
-#### ① retrofit动态代理不能代理抽象类 
+#### ① retrofit动态代理能不能代理抽象类 
 
 不能，只能代理接口。
 
 #### ② okhttp做了什么事
 
+构建Request请求(method、url、header、body)
 
+拦截器等
+
+#### ③ 拦截器如何在不消耗流的情况下获取response信息？
+
+responseBody.source().buffer().clone().readString()
 
 ### 3 data/data/[packageName]和Android/data/[packageName]区别
 
@@ -111,7 +123,21 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 measure -> layout -> draw
 
+VSync技术通过一个定期同步信号，同步显卡与显示器，从而避免了“Tearing”（撕裂）现象。
+
+VSync一般依赖于缓冲技术，否则：在系统的FPS低于显示器刷新频率的情况下，仍然会有“Tearing”（撕裂）现象，这个不难理解；在系统的FPS高于显示器刷新频率的情况下，显卡会将一部分时间浪费在等待上，因为没有可用的内存用于绘制。
+
+当界面不需要刷新时（用户无操作，界面无动画），app 就接收不到屏幕刷新信号所以也就不会让 CPU 再去绘制视图树计算画面数据工作，但是底层仍然会每隔 16.6 ms 切换下一帧的画面，只是这个下一帧画面一直是相同的内容。
+
 HWComposer每16ms发出的信号, 经由WindowManger->ViewRootImpl->最后触发页面上所有View的draw流程(仅当页面发生变化的情况; 否则不重绘)
+
+当 next() 方法在取 Message 时发现队头是一个同步屏障的消息时，就会去遍历整个队列，只寻找设置了异步标志的消息，如果有找到异步消息，那么就取出这个异步消息来执行，否则就让 next() 方法陷入阻塞状态。如果 next() 方法陷入阻塞状态，那么主线程此时就是处于空闲状态的，也就是没在干任何事。所以，如果队头是一个同步屏障的消息的话，那么在它后面的所有同步消息就都被拦截住了，直到这个同步屏障消息被移除出队列，否则主线程就一直不会去处理同步屏幕后面的同步消息。
+
+##### textView.setText()调用两次，触发几次垂直刷新？最后显示第一次还是第二次的数据？
+
+一次。
+
+第二次。
 
 #### ⑤ requestLayout()/invalidate()区别
 
@@ -173,9 +199,18 @@ onDraw: 之前
 
 onDrawOver: 之后
 
-### 6 WindowManger
+### 6 Window、WindowManger、WindowMangerService。
 
-WindowMangerService
+Window是承载可见视图的容器。唯一实现是PhoneWindow。
+
+WindowManager用于管理Windnow。它的实现是WindowManagerImp。具体实现是WindowManagerGlobal(代理类)。
+
+WindowMangerService是一个系统进程。
+
+```java
+getSystemService(Context. WINDOW_ SERVICE);// 获取Window实例
+```
+
 
 管理窗口
 
@@ -187,7 +222,8 @@ WindowMangerService
 
 #### ② Messager
 
-// TODO 
+Messenger是基于Message对象进行跨进程通信的，类似于Handler发送消息实现线程间通信一样的用法。
+
 
 ### 8 JSBridge的原理
 
@@ -361,9 +397,30 @@ PagerAdapter：当所要展示的视图比较简单时适用
 FragmentPagerAdapter：当所要展示的视图是Fragment，并且数量比较少时适用
 FragmentStatePagerAdapter：当所要展示的视图是Fragment，并且数量比较多时适用
 
-## RenderThread了解吗？
-// TODO
 
-## 对比ListView和RecyclerView的缓存机制
+### SharedPreference支持多进程吗？在使用上有是什么需要注意的？
+不支持跨进程
+commit是同步方法;apply是异步方法
+Android基于xml实现的一种数据持久化方式
+不要使用SP储存过大的数据
+
+### RenderThread了解吗？
+
+> RenderThread 是一个由系统管理的线程，它可以在UI线程阻塞时保持动画平滑。
+
+在 UI 线程外执行优化操作与将绘制操作分发给 GPU。
+
+这种间接的方式可以带来诸多好处：
+
+一个展示列表可以被多次绘制，而不需要重新执行业务逻辑。
+
+特定的操作（如转换、放缩等等）可以覆盖整个列表，无需重新安排某个绘制操作。
+
+一旦所有的绘制操作已知，就可以进行优化：比如，如果可能，所有的文字都一起绘制。
+
+展示列表的处理工作可能可以分发给另一个线程执行。
+
+
+### 对比ListView和RecyclerView的缓存机制
 // TODO
 
