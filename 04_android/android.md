@@ -1,32 +1,38 @@
 
-## 三、Android
+# Android
 
-### 网络
+[TOC]
 
-#### ① retrofit动态代理能不能代理抽象类 
+## 网络
+
+### ① retrofit动态代理能不能代理抽象类 
 
 不能，只能代理接口。
 
-#### ② okhttp做了什么事
+### ② okhttp做了什么事
 
 构建Request请求(method、url、header、body)
 
 拦截器等
 
-#### ③ 拦截器如何在不消耗流的情况下获取response信息？
+### ③ 拦截器如何在不消耗流的情况下获取response信息？
 
 responseBody.source().buffer().clone().readString()
 
-### 3 data/data/[packageName]和Android/data/[packageName]区别
+## Storage
+
+### data/data/[packageName]和Android/data/[packageName]区别
 
 data/data/[packageName]: 内部储存的私有目录
 Android/data/[packageName]: 外部储存的私有目录(Android Q(10)以前,其他应用也可以访问; Q及其之后只能自己的应用访问)
 
 在App被卸载时，二者都会被移除。
 
-### 4 Android有哪些创建多线程的方式
+## 多线程/并发/锁
+
+### Android有哪些创建多线程的方式
 IntentService、HandlerThread、AsyncTask
-#### IntentService是怎么关闭自己创建的线程的
+### IntentService是怎么关闭自己创建的线程的
 stopSelf()
 
 ### Handler/Looper/MessageQueue关系
@@ -39,9 +45,13 @@ Handler发送消息, 进入MessageQueue, Looper取消息交给对应的Handler�
 一个Handler可以发消息给另一个Handler处理吗？不能
 Handler可以绑定多个Looper吗？不能
 
-### 5 View绘制与分发
+### 如何终止一个HandlerThread？
+`mHandlerThread.getLooper().quit();`
+向此looper的MessageQueue发送一个target为null的message，就可以停止这个线程的运行。
 
-#### ① View的事件分发过程
+## View绘制与分发
+
+### ① View的事件分发过程
 
 触摸事件的分发自上而下分别是Activity->Window->View。顶级View一般是一个ViewGroup, 若事件一直未被处理则ViewGroup会下发给其下层的View直到下层View无Child为止;最底层的View也不处理事件的话，事件则会向上传递，直到传递到处理事件的View;若所有的View都不处理事件，那么事件最后会交由Activity处理。
 
@@ -71,7 +81,7 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 }
 ```
 
-#### ② onTouch、onTouchEvent和onClick的关系
+### onTouch、onTouchEvent和onClick的关系
 
 当一个View需要处理事件时，且该View设置了OnTouchListener，那么onTouch被调用，若onTouch的返回值为false，则onTouchEvent会被调用; 返回true，则onTouchEvent不会被调用。即onTouch的优先级高于onTouchEvent。
 
@@ -79,7 +89,7 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 *注: 若希望深入了解View的触摸事件分发，建议阅读任玉刚的《Android开发艺术探索》的第3章3.4节。*
 
-#### ③ 了解ACTION_CANCEL事件吗
+###  了解ACTION_CANCEL事件吗
 
 **触发条件**
 
@@ -89,7 +99,7 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 > 上层 View 是一个 RecyclerView，它收到了一个 `ACTION_DOWN` 事件，由于这个可能是点击事件，所以它先传递给对应 ItemView，询问 ItemView 是否需要这个事件，然而接下来又传递过来了一个 `ACTION_MOVE`事件，且移动的方向和 RecyclerView 的可滑动方向一致，所以 RecyclerView 判断这个事件是滚动事件，于是要收回事件处理权，这时候对应的 ItemView 会收到一个 `ACTION_CANCEL` ，并且不会再收到后续事件。
 
-#### ④ 简述绘制流程。垂直同步了解吗？16ms刷新了解吗
+### 简述绘制流程。垂直同步了解吗？16ms刷新了解吗
 
 measure -> layout -> draw
 
@@ -109,23 +119,23 @@ HWComposer每16ms发出的信号, 经由WindowManger->ViewRootImpl->最后触发
 
 第二次。
 
-#### ⑤ requestLayout()/invalidate()区别
+### requestLayout()/invalidate()区别
 
 requestLayout: 向上调用指导顶层View。会走layout和measure流程。可能会走draw流程。
 
 invalidate: draw。
 
-#### ⑥ 开启/关闭硬件加速对View绘制有何影响
+### 开启/关闭硬件加速对View绘制有何影响
 
 开启: 将一部分绘制计算工作交给GPU处理(原来是CPU做的)。提搞渲染效率。
 
 有些绘制Api不支持开启硬件加速。即相同的绘制Api在开启/关闭硬件加速的展示效果不同。
 
-#### ⑦ 如何用Drawable优雅地实现自定义View的动画效果
+### 如何用Drawable优雅地实现自定义View的动画效果
 
 自定义Drawable。重写相应的方法。
 
-#### ⑧ 有没有遇到过页面卡顿？是什么原因造成的？最佳实践？如何排查发生的原因？
+### 有没有遇到过页面卡顿？是什么原因造成的？最佳实践？如何排查发生的原因？
 
 Android Profile定位。
 
@@ -139,7 +149,7 @@ Android Profile定位。
 
 可以用编译时注解, 针对布局文件自动生成对应的Java代码。解放重复劳动。
 
-#### ⑨ RecyclerView的优化
+### RecyclerView的优化
 
 - 1 `recyclerView.setHasFixedSize(true);`当Item的高度如是固定的，设置这个属性为true可以提高性能，尤其是当RecyclerView有条目插入、删除时性能提升更明显。
 
@@ -184,7 +194,7 @@ getSystemService(Context. WINDOW_ SERVICE);// 获取Window实例
 
 管理窗口
 
-### 7 跨进程通信
+## 跨进程通信
 
 #### ①  Binder原理
 
@@ -234,51 +244,6 @@ android:protectionLevel="signature"
 setJavaScriptEnabled(true)
 
 
-### 11 开源框架
-
-#### ① RxJava
-
-知道哪些操作符,  举一个聚合操作符(zip)说说如何实现的？
-
-#### ② okhttp+retrofit
-
-框架做了些什么事情
-
-- 允许连接到同一个主机地址的所有请求,提高请求效率
-
-- 共享Socket,减少对服务器的请求次数
-
-- 通过连接池,减少了请求延迟
-
-- 缓存响应数据来减少重复的网络请求
-
-- 减少了对数据流量的消耗
-
-- 自动处理GZip压缩
-
-#### ③ ARouter
-
-如何实现路由？(建议从路由注册->路由调用两个方面讲，调用的时候是怎么一步一步找到路由注册的地方的)
-
-#### ④ 热修复框架
-
-热修复原理有哪些流派?各自的实现原理是什么？transform API用过吗？
-
-// TODO 
-
-#### ⑤ Glide
-
-Glide的特点：
-
-- 支持GIF动图
-
-- 支持加载缩略图
-
-- Activity生命周期的集成
-
-- OkHttp和Volley的支持: 默认采用HttpUrlConnection作为网络协议栈
-
-- 动画的支持：新增支持图片的淡入淡出动画效果
 
 ### 12 Android架构分为几层？(C/S架构)
 
