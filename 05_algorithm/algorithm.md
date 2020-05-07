@@ -88,7 +88,7 @@ public boolean isPalindrome(int x) {
 }
 ```
 
-## 删除单向链表中倒数第K个位置。能否做到一次循环？
+## 删除单向链表中倒数第K个位置。能否做到一次循环？(字节跳动)
 ```java
 class ListNode{
     ListNode next;
@@ -96,8 +96,22 @@ class ListNode{
 }
 ```
 
-```java
-// TODO 
+```kotlin
+/**
+ * 删除单向链表中的第K个节点
+ *
+ * @param head 单向链表
+ * @param k 删除倒数第k个节点
+ */
+private fun deleteReverseNode(head: ListNode?, k: Int) {
+    var t: ListNode? = head
+    val list = arrayListOf<ListNode>()
+    while (t != null) {
+        list.add(t)
+        t = t.next
+    }
+    list[list.size - k - 1].next = list[list.size - k + 1]
+}
 ```
 
 
