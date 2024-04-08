@@ -30,6 +30,7 @@ responseBody.source().buffer().clone().readString()
 ### data/data/[packageName]和Android/data/[packageName]区别
 
 data/data/[packageName]: 内部储存的私有目录
+
 Android/data/[packageName]: 外部储存的私有目录(Android Q(10)以前,其他应用也可以访问; Q及其之后只能自己的应用访问)
 
 在App被卸载时，二者都会被移除。

@@ -24,7 +24,7 @@ get(key)方法时获取key的hash值，计算hash&(n-1)得到在数组中的位�
 
 **HashMap的构造器和扩容策略**
 
-HashMap有4个构造器，其他构造器如果用户没有传入initialCapacity(**初始容量**)和loadFactor(**扩容因子**)这两个参数，会使用默认值:*initialCapacity*默认为`16`(上限为`2^30`，即`Integer.MAX_VALUE`)，*loadFactory*默认为`0.75`。
+HashMap有4个构造器，其他构造器如果用户没有传入initialCapacity(**初始容量**)和loadFactor(**扩容因子**)这两个参数，会使用默认值:*initialCapacity*默认为`16`(上限为2<sup>30</sup>，即`1073741824`<sub>这个数字再次翻倍将达到`Integer.MAX_VALUE + 1`,超出`Integer`的最大值</sub>)，*loadFactory*默认为`0.75`。
 
 **扩容因子**：代表容器里有效数据和容量的比例。扩容因子越大，则空间利用率越高，查询效率越低；反之，空间利用率越低，查询效率越高。
 
@@ -32,7 +32,7 @@ HashMap有4个构造器，其他构造器如果用户没有传入initialCapacity
 
 查看源码中HashMap的`resize`方法可得到以下结论:
 
-- 1 HashMap的最大容量为Integer.MAX_VALUE
+- 1 HashMap的最大容量为2<sup>30<sub>
 - 2 当容量不足时, 容量会增长为原来的一倍。
 
 ```java
