@@ -37,6 +37,8 @@
 
 RFC793文档里说到，带有SYN标志的过程包是不可以携带数据的，也就是说三次握手的前两次是不可以携带数据的（逻辑上看，连接还没建立，携带数据好像也有点说不过去）。重点就是第三次握手可不可以携带数据。RFC793文档里有一句话：
 
+> RFC793文档定义了实现TCP协议所要求的行为规范。
+
 > Data or controls which were queued for transmission may be included.
 
 ## TCP四次挥手
@@ -139,7 +141,7 @@ Cookie和其他有状态机制是后来在单独的RFC中定义的添加内容�
 
 ### 介绍几个对称加密和非对称加密算法
 
-对称加密: 加密和解密使用相同的密钥。如:DES、AES  
+对称加密: 加密和解密使用相同的密钥(yào)。如:DES、AES  
 非对称加密: 公开密钥（publickey）和私有密钥（privatekey）如: RSA  
 Hash算法: MD5、SHA  
 
