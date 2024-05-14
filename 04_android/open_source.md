@@ -6,15 +6,17 @@
 
 Application#registerActivityLifecycleCallbacks监听Activity的生命周期。
 
-如果弱引用 reference 持有的对象被 GC 回收，JVM 就会把这个弱引 用加入到与之关联的引用队列 referenceQueue 中
+如果弱引用 reference 持有的对象被 GC 回收，JVM 就会把这个弱引用加入到与之关联的引用队列 referenceQueue 中
 
 1 监听 Activity 的生命周期
 
-2 在 onDestroy 的时候，创建相应的 Refrence 和 RefrenceQueue，并启动后台进程去检测
+2 在 onDestroy 的时候，创建相应的 Reference 和 ReferenceQueue，并启动后台进程去检测
 
-3 一段时间之后，从 RefrenceQueue 读取，若读取不到相应 activity 的 Refrence，有可能发生泄露了，这个时候，再促发 gc，一段时间之后，再去读取，若在从 RefrenceQueue 还是读取不到相应 activity 的 refrence，可以断定是发生内存泄露了
+3 一段时间之后，从 ReferenceQueue 读取，若读取不到相应 activity 的 Reference，有可能发生泄露了，这个时候，再促发 gc，一段时间之后，再去读取，若在从 ReferenceQueue 还是读取不到相应 activity 的 reference，可以断定是发生内存泄露了
 
-4 发生内存泄露之后，dump，分析 hprof 文件，找到泄露路径（使用 haha 库分析），发送到通知栏
+4 发生内存泄露之后，dump，分析 hprof 文件，找到泄露路径（使用 [haha][haha] 库分析），发送到通知栏
+
+[haha]: https://www.jianshu.com/p/31d2da927614
 
 ### LeakCanary如何判断对象有没有被回收？
 

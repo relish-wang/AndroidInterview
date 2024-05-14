@@ -1,4 +1,3 @@
-
 # Android
 
 [TOC]
@@ -38,8 +37,11 @@ Android/data/[packageName]: 外部储存的私有目录(Android Q(10)以前,其�
 ## 多线程/并发/锁
 
 ### Android有哪些创建多线程的方式
+
 IntentService、HandlerThread、AsyncTask
+
 ### IntentService是怎么关闭自己创建的线程的
+
 stopSelf()
 
 ### Handler/Looper/MessageQueue关系
@@ -53,6 +55,7 @@ Handler发送消息, 进入MessageQueue, Looper取消息交给对应的Handler�
 Handler可以绑定多个Looper吗？不能
 
 ### 如何终止一个HandlerThread？
+
 `mHandlerThread.getLooper().quit();`
 向此looper的MessageQueue发送一个target为null的message，就可以停止这个线程的运行。
 
@@ -60,7 +63,8 @@ Handler可以绑定多个Looper吗？不能
 
 ### ① View的事件分发过程
 
-触摸事件的分发自上而下分别是Activity->Window->View。顶级View一般是一个ViewGroup, 若事件一直未被处理则ViewGroup会下发给其下层的View直到下层View无Child为止;最底层的View也不处理事件的话，事件则会向上传递，直到传递到处理事件的View;若所有的View都不处理事件，那么事件最后会交由Activity处理。
+触摸事件的分发自上而下分别是Activity->Window->View。顶级View一般是一个ViewGroup,
+若事件一直未被处理则ViewGroup会下发给其下层的View直到下层View无Child为止;最底层的View也不处理事件的话，事件则会向上传递，直到传递到处理事件的View;若所有的View都不处理事件，那么事件最后会交由Activity处理。
 
 - public boolean dispatchTouchEvent(MotionEvent ev)
 
@@ -77,9 +81,9 @@ Handler可以绑定多个Looper吗？不能
 以上三个方法的关系可以用以下伪代码来描述：
 
 ```java
-public boolean dispatchTouchEvent(MotionEvent ev){
+public boolean dispatchTouchEvent(MotionEvent ev) {
     boolean consume = false;
-    if(onInterceptTouchEvent(ev)){
+    if (onInterceptTouchEvent(ev)) {
         consume = onToucheEvent(ev);
     } else {
         consume = child.dispatchTouchEvent(ev);
@@ -90,13 +94,14 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 ### onTouch、onTouchEvent和onClick的关系
 
-当一个View需要处理事件时，且该View设置了OnTouchListener，那么onTouch被调用，若onTouch的返回值为false，则onTouchEvent会被调用; 返回true，则onTouchEvent不会被调用。即onTouch的优先级高于onTouchEvent。
+当一个View需要处理事件时，且该View设置了OnTouchListener，那么onTouch被调用，若onTouch的返回值为false，则onTouchEvent会被调用;
+返回true，则onTouchEvent不会被调用。即onTouch的优先级高于onTouchEvent。
 
 在onTouchEvent中，如果View设置了OnClickListener，则会调用OnClick。故，OnClick事件的优先级低于onTouchEvent。
 
 *注: 若希望深入了解View的触摸事件分发，建议阅读任玉刚的《Android开发艺术探索》的第3章3.4节。*
 
-###  了解ACTION_CANCEL事件吗
+### 了解ACTION_CANCEL事件吗
 
 **触发条件**
 
@@ -104,7 +109,10 @@ public boolean dispatchTouchEvent(MotionEvent ev){
 
 举个例子:
 
-> 上层 View 是一个 RecyclerView，它收到了一个 `ACTION_DOWN` 事件，由于这个可能是点击事件，所以它先传递给对应 ItemView，询问 ItemView 是否需要这个事件，然而接下来又传递过来了一个 `ACTION_MOVE`事件，且移动的方向和 RecyclerView 的可滑动方向一致，所以 RecyclerView 判断这个事件是滚动事件，于是要收回事件处理权，这时候对应的 ItemView 会收到一个 `ACTION_CANCEL` ，并且不会再收到后续事件。
+> 上层 View 是一个 RecyclerView，它收到了一个 `ACTION_DOWN` 事件，由于这个可能是点击事件，所以它先传递给对应 ItemView，询问
+> ItemView 是否需要这个事件，然而接下来又传递过来了一个 `ACTION_MOVE`事件，且移动的方向和 RecyclerView 的可滑动方向一致，所以
+> RecyclerView 判断这个事件是滚动事件，于是要收回事件处理权，这时候对应的 ItemView 会收到一个 `ACTION_CANCEL`
+> ，并且不会再收到后续事件。
 
 ### 简述绘制流程。垂直同步了解吗？16ms刷新了解吗
 
@@ -114,11 +122,15 @@ VSync技术通过一个定期同步信号，同步显卡与显示器，从而避
 
 VSync一般依赖于缓冲技术，否则：在系统的FPS低于显示器刷新频率的情况下，仍然会有“Tearing”（撕裂）现象，这个不难理解；在系统的FPS高于显示器刷新频率的情况下，显卡会将一部分时间浪费在等待上，因为没有可用的内存用于绘制。
 
-当界面不需要刷新时（用户无操作，界面无动画），app 就接收不到屏幕刷新信号所以也就不会让 CPU 再去绘制视图树计算画面数据工作，但是底层仍然会每隔 16.6 ms 切换下一帧的画面，只是这个下一帧画面一直是相同的内容。
+当界面不需要刷新时（用户无操作，界面无动画），app 就接收不到屏幕刷新信号所以也就不会让 CPU 再去绘制视图树计算画面数据工作，但是底层仍然会每隔
+16.6 ms 切换下一帧的画面，只是这个下一帧画面一直是相同的内容。
 
-HWComposer每16ms发出的信号, 经由WindowManger->ViewRootImpl->最后触发页面上所有View的draw流程(仅当页面发生变化的情况; 否则不重绘)
+HWComposer每16ms发出的信号, 经由WindowManger->ViewRootImpl->最后触发页面上所有View的draw流程(仅当页面发生变化的情况;
+否则不重绘)
 
-当 next() 方法在取 Message 时发现队头是一个同步屏障的消息时，就会去遍历整个队列，只寻找设置了异步标志的消息，如果有找到异步消息，那么就取出这个异步消息来执行，否则就让 next() 方法陷入阻塞状态。如果 next() 方法陷入阻塞状态，那么主线程此时就是处于空闲状态的，也就是没在干任何事。所以，如果队头是一个同步屏障的消息的话，那么在它后面的所有同步消息就都被拦截住了，直到这个同步屏障消息被移除出队列，否则主线程就一直不会去处理同步屏幕后面的同步消息。
+当 next() 方法在取 Message 时发现队头是一个同步屏障的消息时，就会去遍历整个队列，只寻找设置了异步标志的消息，如果有找到异步消息，那么就取出这个异步消息来执行，否则就让
+next() 方法陷入阻塞状态。如果 next()
+方法陷入阻塞状态，那么主线程此时就是处于空闲状态的，也就是没在干任何事。所以，如果队头是一个同步屏障的消息的话，那么在它后面的所有同步消息就都被拦截住了，直到这个同步屏障消息被移除出队列，否则主线程就一直不会去处理同步屏幕后面的同步消息。
 
 ##### textView.setText()调用两次，触发几次垂直刷新？最后显示第一次还是第二次的数据？
 
@@ -195,9 +207,8 @@ WindowManager用于管理Windnow。它的实现是WindowManagerImp。具体实�
 WindowMangerService是一个系统进程。
 
 ```java
-getSystemService(Context. WINDOW_ SERVICE);// 获取Window实例
+getSystemService(Context.WINDOW_ SERVICE);// 获取Window实例
 ```
-
 
 管理窗口
 
@@ -210,7 +221,6 @@ getSystemService(Context. WINDOW_ SERVICE);// 获取Window实例
 #### ② Messager
 
 Messenger是基于Message对象进行跨进程通信的，类似于Handler发送消息实现线程间通信一样的用法。
-
 
 ### 8 JSBridge的原理
 
@@ -233,7 +243,7 @@ Messenger是基于Message对象进行跨进程通信的，类似于Handler发送
 5. 通过ApkBuilder工具将资源文件、DEX文件打包生成APK文件。
 6. 利用KeyStore对生成的APK文件进行签名。
 7. 如果是正式版的APK，还会利用ZipAlign工具进行对齐处理，对齐的过程就是将APK文件中所有的资源文件举例文件的起始距离都偏移4字节的整数倍，这样通过内存映射访问APK文件
-    的速度会更快。
+   的速度会更快。
 
 #### ② 如何快速优雅地打渠道包(applicationId一致, 仅资源文件不同, 答flavors的不得分)
 
@@ -250,8 +260,6 @@ android:protectionLevel="signature"
 5 使用WebView注意js注入
 setJavaScriptEnabled(true)
 
-
-
 ### 12 Android架构分为几层？(C/S架构)
 
 6层。(自上而下)
@@ -262,6 +270,7 @@ setJavaScriptEnabled(true)
 - Android运行时层(Davlik/ART)
 - 硬件抽象层
 - Linux内核层
+
 ### 13 从手机桌面点击App到第一个Activity启动，发生了什么？
 
 ①点击桌面App图标，**Launcher**进程采用Binder IPC向**system_server**进程发起startActivity请求；
@@ -306,8 +315,8 @@ setJavaScriptEnabled(true)
 
 - SharedPreferences性能优化:
 
-  - 不要存放大key和大value。会引起界面卡，频繁GC，占用内存等。
-  - 无关的配置项不要放在一起。文件大了读取效率也会降低(SP本质上是xml文件)
+    - 不要存放大key和大value。会引起界面卡，频繁GC，占用内存等。
+    - 无关的配置项不要放在一起。文件大了读取效率也会降低(SP本质上是xml文件)
 
 - 节制的使用Service，当启动一个Service时，系统总是倾向于保留这个Service依赖的进程，这样会造成系统资源的浪费，可以使用IntentService，执行完成任务后会自动停止。
 
@@ -362,4 +371,8 @@ Android基于xml实现的一种数据持久化方式
 
 展示列表的处理工作可能可以分发给另一个线程执行。
 
+### 增量编译
 
+[《kotlin 编译 慢 Android studio kotlin编译过程》][kotlin编译]
+
+[kotlin编译] :https://blog.51cto.com/u_12192/7715467
