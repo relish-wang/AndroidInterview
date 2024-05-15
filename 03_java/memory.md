@@ -2,6 +2,19 @@
 
 ## JVM(Java虚拟机)和JMM(Java内存模型)
 
+### JMM
+
+堆: 对象。
+线程栈: 调用栈+本地变量
+
+线程私有的：程序计数器、虚拟机栈、本地方法栈
+
+线程共享的：堆、方法区、直接内存 (非运行时数据区的一部分)
+
+Java 虚拟机规范对于运行时数据区域的规定是相当宽松的。  
+以堆为例：堆可以是连续空间，也可以不连续。堆的大小可以固定，也可以在运行时按需扩展。    
+虚拟机实现者可以使用任何垃圾回收算法管理堆，甚至完全不进行垃圾收集也是可以的。
+
 ### ① 了解内存泄露相关的知识吗？为什么会产生内存泄漏？
 
 一个生命周期长的对象被生命周期短所持有。最终导致OOM。
@@ -21,9 +34,21 @@
 1 虚拟机栈中引用的对象(栈帧中的本地变量表)
 2 方法中类的静态属性引用的对象
 3 方法区中常量引用的对象
-4 Native 方法引用的对象
+4 Native方法(JNI)栈内引用的对象
+5 所有被同步锁synchronized持有的对象
+6 Java虚拟机内部的引用。<sub>一些常驻的异常对象(如： NullPointerException、OutOfMemoryError)，系统类加载器。</sub>
 
-###  gc触发的时机, 回收优先级(哪些对象会优先回收)
+### gc触发的时机, 回收优先级(哪些对象会优先回收)
+
+GcRetentionPolicy
+每个Space都有自己的gc回收策略，如下图所示：
+
+kGcRetentionPolicyNeverCollect：不需要回收某个Space所包含的垃圾对象（因为该Space可能不存在垃圾对象）。
+kGcRetentionPolicyAlwaysCollect：每次垃圾回收都需要处理某个Space空间。
+kGcRetentionPolicyFullCollect：直到最后时刻才回收某个Space空间中的垃圾对象。这个最后时刻就是所谓的full GC。
+
+![][art_gc]
+
 
 - Minor GC触发条件：当Eden区满时，触发Minor GC。
 
@@ -49,16 +74,24 @@ TODO
 
 ### ② 弱引用和软引用的区别
 
-**没有强引用指向弱引用的指向的对象时，弱引用就会被回收。**即WeakReference不改变原有的强引用对象的垃圾回收机制。一旦其指示对象没有任何强引用对象时，此对象即进入正常的垃圾回收流程。
+**没有强引用指向弱引用的指向的对象时，弱引用就会被回收。**
+即WeakReference不改变原有的强引用对象的垃圾回收机制。一旦其指示对象没有任何强引用对象时，此对象即进入正常的垃圾回收流程。
 
 而软引用需要在**没有强引用指向弱引用的指向的对象**且**内存不足**时才会回收它指向的对象。
 
 ### ③ 为什么会出现内存抖动？如何处理(注意是处理不是预防)
 
-**原因**: 短时间内申请大量临时对象, 又在短时间内释放临时对象。(比如: 循环体内; 自定义View的onDraw方法内;Adapter的getView/onBindViewHolder内申请对象)
+**原因**: 短时间内申请大量临时对象, 又在短时间内释放临时对象。(比如: 循环体内;
+自定义View的onDraw方法内;Adapter的getView/onBindViewHolder内申请对象)
 
 - 定位: android profile|Tools->Android->Android Device Monitor
 - LeakCanary
 - MAT工具
 
 - [《Android 性能优化 - 彻底解决内存抖动》](https://juejin.im/post/5a7ff867f265da4e865a6b5b)
+
+[art_gc]: ./art/art_gc.png
+
+[android_gc]: https://juejin.cn/post/6966205309782065159
+
+[深入理解Android ART虚拟机]: https://weread.qq.com/web/reader/3ee32e60717f5af83ee7b37ke3732b703119e3796ae8bea
