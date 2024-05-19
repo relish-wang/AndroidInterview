@@ -32,7 +32,7 @@ HashMap有4个构造器，其他构造器如果用户没有传入initialCapacity
 
 查看源码中HashMap的`resize`方法可得到以下结论:
 
-- 1 HashMap的最大容量为2<sup>30<sub>
+- 1 HashMap的最大容量为2<sup>30</sup>
 - 2 当容量不足时, 容量会增长为原来的一倍。
 
 ```java
