@@ -70,7 +70,13 @@ LeakCanary
 
 ### ⑤ LeakCanary如何实现内存泄漏的检查？LeakCanary如何判断对象有没有被回收？
 
-TODO
+WeakReference 和 ReferenceQueue，即 LeakCanary 利用了 Java 的 WeakReference 和 ReferenceQueue，通过将 Activity 包装到 WeakReference 中，
+被 WeakReference 包装过的 Activity 对象如果能够被回收，则说明引用可达，垃圾回收器就会将该 WeakReference 引用存放到 ReferenceQueue 中。
+假如我们要监视某个 Activity 对象，LeakCanary 就会去 ReferenceQueue 找这个对象的引用，如果找到了，说明该对象是引用可达的，能被 GC 回收，
+如果没有找到，说明该对象有可能发生了内存泄漏。最后，LeakCanary 会将 Java 堆转储到一个 .hprof 文件中，再使用 Shark（堆分析工具）析 .hprof 文件并定位堆转储中“滞留”的对象，
+并对每个"滞留"的对象找出 GC roots 的最短强引用路径，并确定是否是泄露，如果泄漏，建立导致泄露的引用链。最后，再将分析完毕的结果以通知的形式展现出来。
+
+原文链接：https://blog.csdn.net/hello_1995/article/details/120075342
 
 ### ② 弱引用和软引用的区别
 
@@ -86,7 +92,14 @@ TODO
 
 - 定位: android profile|Tools->Android->Android Device Monitor
 - LeakCanary
-- MAT工具
+- ~~MAT工具(Eclipse Memory Analyzer)~~ 太过时了,应该不会再用了。
+- IDEA plugin: JProfiler
+- AndroidStudio: Profiler
+  - Allocations：Java堆中的实例个数
+  - Native Size：Native层分配的内存大小
+  - Shallow Size：本对象实例在Java堆中占用的内存大小
+  - Retained Size：这个类的实例本身的对象，以及它直接或者间接引用的所有对象占用的内存大小
+![](./art/profiler.png)
 
 - [《Android 性能优化 - 彻底解决内存抖动》](https://juejin.im/post/5a7ff867f265da4e865a6b5b)
 
