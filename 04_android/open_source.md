@@ -12,7 +12,7 @@ Application#registerActivityLifecycleCallbacks监听Activity的生命周期。
 
 2 在 onDestroy 的时候，创建相应的 Reference 和 ReferenceQueue，并启动后台进程去检测
 
-3 一段时间之后，从 ReferenceQueue 读取，若读取不到相应 activity 的 Reference，有可能发生泄露了，这个时候，再促发 gc，一段时间之后，再去读取，若在从 ReferenceQueue 还是读取不到相应 activity 的 reference，可以断定是发生内存泄露了
+3 一段时间之后，从 ReferenceQueue 读取，若读取不到相应 activity 的 Reference，有可能发生泄露了，这个时候，再触发 gc，一段时间之后，再去读取，若在从 ReferenceQueue 还是读取不到相应 activity 的 reference，可以断定是发生内存泄露了
 
 4 发生内存泄露之后，dump，分析 hprof 文件，找到泄露路径（使用 [haha][haha] 库分析），发送到通知栏
 
