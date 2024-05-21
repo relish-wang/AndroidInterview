@@ -139,7 +139,7 @@ public ThreadPoolExecutor(
 
 - HashTable(操作方法加synchronized关键字修饰)
 - ConcurrentHashMap(锁分片)
-  - Segment 继承了 ReentrantLock，所以 Segment 是一种可重入锁，扮演锁的角色。
+    - Segment 继承了 ReentrantLock，所以 Segment 是一种可重入锁，扮演锁的角色。
 
 ### ArrayList平替
 
@@ -147,9 +147,11 @@ public ThreadPoolExecutor(
 - CopyOnWriteArrayList(Lock锁)
 
 ### 集合工具
+
 Collections.synchronizedList(list);Collections.synchronizedMap(m)
 
 ### ReentrantLock
+
 <sub>re-entrant-lock</sub>  
 可重入锁，也叫做 递归锁，从名字上理解，字面意思就是再进入的锁，重入性是指任意线程在获取到锁之后能够再次获取该锁而不会被锁阻塞，首先他需要具备两个条件：
 
@@ -226,6 +228,36 @@ NEW、RUNNABLE、BLOCKED、WAITING、TIMED_WAITING、TERMINATED
 | TERMINATED    | 	线程完成执行，终止状态                    |
 
 ![thread_state][thread_state]
+
+## 进程的生命周期
+
+| 生命周期       | 说明                                                          |
+|:-----------|:------------------------------------------------------------|
+| Foreground | 前台进程(当前用户正在交互的组件所在的进程)。该进程处于栈的最顶端                           |
+| Visible    | 该进程非前台进程, 但它仍然可见                                            |
+| Service    | 该进程托管着, 使用startService()方法所启动的Service                       |
+| Background | 后台进程, 不再对用户可见的组件                                            |
+| Empty      | 不包含任何组件的进程。用作缓存的目的, 以加快应用程序未来的恢复。位于栈的最底端, 当系统回收内存时, 它会首先被销毁 |
+
+
+## Android线程消息
+
+Message
+MessageQueue
+Looper
+Handler
+
+## 周期性任务
+
+Timer。最常用。适用于短周期任务。执行完毕后, 记得timer.cancel(), 否则内存泄漏。
+
+ScheduledExecutorService。比Timer更灵活、更强大。适用于短周期任务。执行完毕后, 记得shutdown()/shutdownNow(), 否则内存泄漏。
+
+AlarmManager, 更高效, 但依赖于系统的闹钟服务, 不适用短期任务(<1天)
+
+## StrictMode
+
+可用于检查线程问题。
 
 [thread_state]: ./art/thread_state.png
 
