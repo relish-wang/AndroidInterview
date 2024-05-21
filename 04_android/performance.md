@@ -1,9 +1,6 @@
 # 提升性能Tips
 
-
-
-极易OOM
-- bitmap
+- bitmap(极易OOM)
   - 缓存
   - 缩放
   - 工作线程中处理
