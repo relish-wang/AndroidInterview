@@ -92,6 +92,8 @@ public boolean dispatchTouchEvent(MotionEvent ev) {
 }
 ```
 
+![](./art/view_dispatch.jpg)
+
 ### onTouch、onTouchEvent和onClick的关系
 
 当一个View需要处理事件时，且该View设置了OnTouchListener，那么onTouch被调用，若onTouch的返回值为false，则onTouchEvent会被调用;
