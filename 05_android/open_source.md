@@ -47,6 +47,21 @@ Application#registerActivityLifecycleCallbacks监听Activity的生命周期。
 
 Proxy.newProxyInstance() 实现InvocationHandler。
 
+
+### ① retrofit动态代理能不能代理抽象类
+
+不能，只能代理接口。
+
+### ② okhttp做了什么事
+
+构建Request请求(method、url、header、body)
+
+拦截器等
+
+### ③ 拦截器如何在不消耗流的情况下获取response信息？
+
+responseBody.source().buffer().clone().readString()
+
 ## ARouter
 
 如何实现路由？(建议从路由注册->路由调用两个方面讲，调用的时候是怎么一步一步找到路由注册的地方的)
@@ -55,7 +70,8 @@ Proxy.newProxyInstance() 实现InvocationHandler。
 
 热修复原理有哪些流派?各自的实现原理是什么？transform API用过吗？
 
-// TODO
+- 类加载器
+- 运行时执行apk
 
 ## Glide
 

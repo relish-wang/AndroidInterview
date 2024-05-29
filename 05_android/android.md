@@ -3,36 +3,59 @@
 [TOC]
 
 - [RecyclerView](recyclerview.md)
-- [kotlin](kotlin.md)
-- [flutter](flutter.md)
 - [开源框架](open_source.md)
 - [储存](storage.md)
 
-## 网络
+# Android基础
 
-### ① retrofit动态代理能不能代理抽象类 
+## Android架构分为几层？(C/S架构)
 
-不能，只能代理接口。
+6层。(自上而下)
 
-### ② okhttp做了什么事
+- 应用框架层
+- 进程通信层
+- 系统服务层
+- Android运行时层(Davlik/ART)
+- 硬件抽象层
+- Linux内核层
 
-构建Request请求(method、url、header、body)
+## 从手机桌面点击App到第一个Activity启动，发生了什么？
 
-拦截器等
+①点击桌面App图标，**Launcher**进程采用Binder IPC向**system_server**进程发起startActivity请求；
 
-### ③ 拦截器如何在不消耗流的情况下获取response信息？
+②system_server进程接收到请求后，向**zygote进程**发送创建进程的请求；
 
-responseBody.source().buffer().clone().readString()
+③Zygote进程**fork出新的子进程**，即App进程；
 
-## Storage
+④**App进程**，通过Binder IPC向sytem_server进程发起**attachApplication请求**；
 
-### data/data/[packageName]和Android/data/[packageName]区别
+⑤system_server进程在收到请求后，进行一系列准备工作后，再通过binder IPC向App进程发送**scheduleLaunchActivity请求**；
 
-data/data/[packageName]: 内部储存的私有目录
+⑥App进程的binder线程（ApplicationThread）在收到请求后，通过handler向主线程发送**LAUNCH_ACTIVITY消息**；
 
-Android/data/[packageName]: 外部储存的私有目录(Android Q(10)以前,其他应用也可以访问; Q及其之后只能自己的应用访问)
+⑦主线程在收到Message后，通过反射机制创建目标Activity，并回调Activity.onCreate()等方法。
 
-在App被卸载时，二者都会被移除。
+⑧到此，App便正式启动，开始进入Activity生命周期，执行完onCreate/onStart/onResume方法，UI渲染结束后便可以看到App的主界面。
+
+###  Window、WindowManger、WindowMangerService。
+
+Window是承载可见视图的容器。唯一实现是PhoneWindow。
+
+WindowManager用于管理Windnow。它的实现是WindowManagerImp。具体实现是WindowManagerGlobal(代理类)。
+
+WindowMangerService是一个系统进程。
+
+```java
+getSystemService(Context.WINDOW_ SERVICE);// 获取Window实例
+```
+
+管理窗口
+
+### 15 ViewPager的三个Adapter要怎么选择使用?
+
+PagerAdapter：当所要展示的视图比较简单时适用
+FragmentPagerAdapter：当所要展示的视图是Fragment，并且数量比较少时适用
+FragmentStatePagerAdapter：当所要展示的视图是Fragment，并且数量比较多时适用
 
 ## 多线程/并发/锁
 
@@ -156,6 +179,32 @@ invalidate: draw。
 
 自定义Drawable。重写相应的方法。
 
+### RenderThread了解吗？
+
+> RenderThread 是一个由系统管理的线程，它可以在UI线程阻塞时保持动画平滑。
+
+在 UI 线程外执行优化操作与将绘制操作分发给 GPU。
+
+这种间接的方式可以带来诸多好处：
+
+一个展示列表可以被多次绘制，而不需要重新执行业务逻辑。
+
+特定的操作（如转换、放缩等等）可以覆盖整个列表，无需重新安排某个绘制操作。
+
+一旦所有的绘制操作已知，就可以进行优化：比如，如果可能，所有的文字都一起绘制。
+
+展示列表的处理工作可能可以分发给另一个线程执行。
+
+### 16 如何针对机型做自定义View的优化
+
+合理使用warp_content，match_parent.
+尽可能的是使用RelativeLayout
+针对不同的机型，使用不同的布局文件放在对应的目录下，android会自动匹配。
+尽量使用点9图片。
+使用与密度无关的像素单位dp，sp
+引入android的百分比布局。
+切图的时候切大分辨率的图，应用到布局当中。在小分辨率的手机上也会有很好的显示效果。
+
 ### 有没有遇到过页面卡顿？是什么原因造成的？最佳实践？如何排查发生的原因？
 
 Android Profile定位。
@@ -169,50 +218,6 @@ Android Profile定位。
 **对于`new View()`的方式, 写起来比较繁琐，还有进一步优化的余地吗？**
 
 可以用编译时注解, 针对布局文件自动生成对应的Java代码。解放重复劳动。
-
-### RecyclerView的优化
-
-- 1 `recyclerView.setHasFixedSize(true);`当Item的高度如是固定的，设置这个属性为true可以提高性能，尤其是当RecyclerView有条目插入、删除时性能提升更明显。
-
-- 2 使用getExtraLayoutSpace为LayoutManager设置更多的预留空间
-
-    ```java
-    LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this) {
-      @Override
-        protected int getExtraLayoutSpace(RecyclerView.State state) {
-          return 300;
-        }
-  };
-  ```
-- 3 item的布局文件层级不宜过深。复杂的可以使用`new View()`形式
-
-#### RecyclerView如何设置多类型的Item
-
-区分viewType
-
-#### RecyclerView如何添加分割线
-
-ItemDecoration
-
-#### 画分割线是在ViewHolder渲染之前还是渲染之后？
-
-onDraw: 之前
-
-onDrawOver: 之后
-
-### 6 Window、WindowManger、WindowMangerService。
-
-Window是承载可见视图的容器。唯一实现是PhoneWindow。
-
-WindowManager用于管理Windnow。它的实现是WindowManagerImp。具体实现是WindowManagerGlobal(代理类)。
-
-WindowMangerService是一个系统进程。
-
-```java
-getSystemService(Context.WINDOW_ SERVICE);// 获取Window实例
-```
-
-管理窗口
 
 ## 跨进程通信
 
@@ -262,35 +267,6 @@ android:protectionLevel="signature"
 5 使用WebView注意js注入
 setJavaScriptEnabled(true)
 
-### 12 Android架构分为几层？(C/S架构)
-
-6层。(自上而下)
-
-- 应用框架层
-- 进程通信层
-- 系统服务层
-- Android运行时层(Davlik/ART)
-- 硬件抽象层
-- Linux内核层
-
-### 13 从手机桌面点击App到第一个Activity启动，发生了什么？
-
-①点击桌面App图标，**Launcher**进程采用Binder IPC向**system_server**进程发起startActivity请求；
-
-②system_server进程接收到请求后，向**zygote进程**发送创建进程的请求；
-
-③Zygote进程**fork出新的子进程**，即App进程；
-
-④**App进程**，通过Binder IPC向sytem_server进程发起**attachApplication请求**；
-
-⑤system_server进程在收到请求后，进行一系列准备工作后，再通过binder IPC向App进程发送**scheduleLaunchActivity请求**；
-
-⑥App进程的binder线程（ApplicationThread）在收到请求后，通过handler向主线程发送**LAUNCH_ACTIVITY消息**；
-
-⑦主线程在收到Message后，通过反射机制创建目标Activity，并回调Activity.onCreate()等方法。
-
-⑧到此，App便正式启动，开始进入Activity生命周期，执行完onCreate/onStart/onResume方法，UI渲染结束后便可以看到App的主界面。
-
 ### 14 如何做内存优化
 
 #### ① 内存泄漏方面
@@ -333,48 +309,3 @@ setJavaScriptEnabled(true)
 - Android Profiler
 
 - LeakCanary
-
-### 16 如何针对机型做自定义View的优化
-
-合理使用warp_content，match_parent.
-尽可能的是使用RelativeLayout
-针对不同的机型，使用不同的布局文件放在对应的目录下，android会自动匹配。
-尽量使用点9图片。
-使用与密度无关的像素单位dp，sp
-引入android的百分比布局。
-切图的时候切大分辨率的图，应用到布局当中。在小分辨率的手机上也会有很好的显示效果。
-
-### 15 ViewPager的三个Adapter要怎么选择使用?
-
-PagerAdapter：当所要展示的视图比较简单时适用
-FragmentPagerAdapter：当所要展示的视图是Fragment，并且数量比较少时适用
-FragmentStatePagerAdapter：当所要展示的视图是Fragment，并且数量比较多时适用
-
-
-### SharedPreference支持多进程吗？在使用上有是什么需要注意的？
-不支持跨进程
-commit是同步方法;apply是异步方法
-Android基于xml实现的一种数据持久化方式
-不要使用SP储存过大的数据
-
-### RenderThread了解吗？
-
-> RenderThread 是一个由系统管理的线程，它可以在UI线程阻塞时保持动画平滑。
-
-在 UI 线程外执行优化操作与将绘制操作分发给 GPU。
-
-这种间接的方式可以带来诸多好处：
-
-一个展示列表可以被多次绘制，而不需要重新执行业务逻辑。
-
-特定的操作（如转换、放缩等等）可以覆盖整个列表，无需重新安排某个绘制操作。
-
-一旦所有的绘制操作已知，就可以进行优化：比如，如果可能，所有的文字都一起绘制。
-
-展示列表的处理工作可能可以分发给另一个线程执行。
-
-### 增量编译
-
-[《kotlin 编译 慢 Android studio kotlin编译过程》][kotlin编译]
-
-[kotlin编译] :https://blog.51cto.com/u_12192/7715467

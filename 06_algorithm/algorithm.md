@@ -114,6 +114,15 @@ private fun deleteReverseNode(head: ListNode?, k: Int) {
 }
 ```
 
+## 单链表实现LRUCache
+SoulApp一面算法题(240523)
+
+要求必须用单链表。
+
+LeetCode原题: https://leetcode.cn/problems/lru-cache/description/
+
+[代码传送门](../code/src/wang/relish/algorithm/chain/LRUCache.kt)
+
 
 ## 三、智力题
 
@@ -156,5 +165,4 @@ private fun deleteReverseNode(head: ListNode?, k: Int) {
 > 砝码能放两边，求同样的问题。（比如我有重量分别为1、3、5的砝码，就可以称出重量为1、2、3、4、5、6、7、8、9的物体）
 
 答：**1 3 9 27 81 243 636**。理由：我是**递推**出来的。从最小的开始，能称1g的物体必须要有一个1g的砝码。然后1g能称了，接着就要称2g。你可以再来个1g的也可以再来个2g的或者3g的，但是三者比较之下，加个3g的不仅能称2g还可以称3、4g，比加个1、2g划算。由此可见，只需将前面的砝码重量*2+1及可以得到下一个最“划算”的砝码重量。1、3已经可以称1~4g的物体，接下来要称5g。那就4+5=9。下一个砝码切成9g最划算。差不多可以总结规律了，就是**3的整数次幂等比序列**。
-
 
