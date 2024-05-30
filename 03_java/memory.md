@@ -319,6 +319,37 @@ Android垃圾回收如何工作？
 内存相关API
 读懂内存日志+内存分析工具+修复
 
+线上监控: KOOM
+
+比leakcanary更丰富的泄漏场景检测
+比leakcanary更好的检测性能
+功能全面的支持线上大规模部署的闭环监控系统
+
+核心流程:
+- 配置下发决策；
+- 监控内存状态；
+- 采集内存镜像；
+- 解析镜像文件(以下简称hprof)生成报告并上传；
+- 问题聚合报警与分配跟进。
+
+LeakCanary: GC过后对象WeakReference一直不被加入 ReferenceQueue，它可能存在内存泄漏。这个过程会主动触发GC做确认，可能会造成用户可感知的卡顿
+KOOM: 采用内存阈值监控来触发镜像采集，将对象是否泄漏的判断延迟到了解析时，阈值监控只要在子线程定期获取关注的几个内存指标即可，性能损耗很低。
+
+KOOM会fork新进程执行dump操作, 对原进程无影响。
+
+> 暂停虚拟机需要调用虚拟机的art::Dbg::SuspendVM函数，谷歌从Android 7.0开始对调用系统库做了限制，快手自研了kwai-linker组件，通过caller address替换和dl_iterate_phdr解析绕过了这一限制。
+ 
+OOM原因:
+
+- Java堆内存溢出(bitmap)
+- 无足够连续内存空间
+- FD(文件描述符)超出限制(Android 9以前 1024个; 9及以后 32768个)
+  - Handler会创建2个FD。mWeakEventFd和mEpollEvent（原因是 Handler 内使用了 epoll 机制来保障 Looper 的等待和唤醒
+- 线程数量超出限制(Thread OOM其实也是 VSS OOM的一种表现形式。)
+  - 通过hook libart.so的pthread_attr_setstacksize外部调研, 可以减少创建线程时分配的内存。快手技术专家认为256k够用了。
+- 虚拟内存不足(重度依赖native的app在越高端的32位机型上越容易触发)
+
+
 ## 内存使用不当导致的问题
 
 - App崩溃(虚拟内存不足)
