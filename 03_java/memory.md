@@ -4,6 +4,12 @@
 
 ### JMM
 
+内存分为： 方法区 、堆 、虚拟机栈（new一个线程就会创建一个虚拟机栈 ）
+
+- 方法区: 存放类信息、static常量
+- 堆: 存放new的对象、final修饰的对象
+- 虚拟机栈: 存放方法的局部变量
+
 堆: 对象。
 线程栈: 调用栈+本地变量
 
@@ -131,7 +137,9 @@ GC 回收，
     - Handler
     - Service使用结束后要关闭(stopSelf())
     - 多进程。减少重复的公共实现, 避免进程间依赖。谨慎使用能访问多个进程的组件(Service、ContentProviderx)
+
 ## 内存API
+
     - AndroidManifest.xml里application节点添加`android:largeHeap="true"`。但不能保证一定能申请到更大的内存。可能导致交互问题,
       影响设备的整体性能。
     - ActivityManager
@@ -301,8 +309,8 @@ adb shekk dumpsys procatats com.netease.cloudmusic -hour 3
 | Low     | 低内存状态                                     |
 | Crit    | 危急状态                                      |
 
-
 # 总结
+
 Android垃圾回收如何工作？
 导致内存泄漏的主要原因？
 什么是内存抖动？
@@ -310,6 +318,130 @@ Android垃圾回收如何工作？
 主要组件的泄漏问题(Activity、Service等)
 内存相关API
 读懂内存日志+内存分析工具+修复
+
+## 内存使用不当导致的问题
+
+- App崩溃(虚拟内存不足)
+- 应用后台存活时间短, 被系统强制杀掉(物理内存不足)
+- 应用启动变慢、流畅性变差、耗电更快(频繁垃圾回收)
+
+## 虚拟内存
+
+|        | 32位机器                               | 64位机器                 |
+|:-------|:------------------------------------|:----------------------|
+| 32位App | 虚拟内存(4G) = 系统内核内存(1G)+App可用虚拟内存(3G) | 4G                    |
+| 64位App | 同上                                  | 256T(2<sup>48</sup>B) |
+
+虚拟内存不足, 系统会主动抛出OOM异常。 
+### Java OOM(Java Heap)
+常见的Java OOM举例
+- App想分配xxx字节内存, 由于内存不足, 系统进行了一次GC, 但只释放了xx字节, 实在没有更多内存可用, 只好抛出OOM
+- 创建一个线程需要分配1040KB内存, 但是可用内存不足, 创建失败。抛出OOM
+
+分析Java OOM可使用的工具:
+- HPROF
+  - Java进程的内存镜像文件
+- JVM TI(JVM Tool Interface)
+  - ART TI。提供的用于内存监控的API。
+  - 开启JVMTI。android.os.Debug(>=Android 9.0); 反射(<Andorid 9.0)
+
+市面上主流的内存分析工具都是基于这两者实现的:
+- MAT
+- LeakCanary
+- Android Studio Memory Profiler
+
+### Native OOM(C/C++代码使用的内存过多)
+
+通过maps/hook等方式, 获取到崩溃时App的具体内存使用情况进行分析。
+
+### Graphics OOM(OpenGL渲染图形(比如直播、拍摄、图像处理)时, 分配内存失败抛出的异常)
+
+和Native OOM的报错信息很像, 可以通过观察abort message是否包含GL关键字来进行区分。
+
+## 物理内存
+
+在设备物理内存不足时, 系统首先会尝试通过GC、通知App清理等手段挤出一些内存来。如果还不够就会触发Low Memory Killer(LMK)机制。
+
+### LMK
+
+根据oom_adj计算出里的oom_score_adj和App占用内存, 按照从高(1000)到低(-1000)的顺序"杀掉"App。
+
+当App使用较多内存时, 退到后台容易被列入先杀名单。
+
+LMK强制杀进程的核心方法: find_and_kill_process()
+
+```shell
+# 查看进程分数
+adb shell cat /proc/{pid}/oom_score_adj
+```
+
+LMK杀进程日志:
+
+> ActivityManager: Force Stopping com.netease.cloudmusic appid=xxx user=-1
+> ActivityManager: Killing 1234:com.netease.cloudmusic(adj 900): com.netease.cloudmusic
+
+## GC对应用启动、流畅性的影响
+
+- 稳定性
+- 启动速度
+- 流畅度
+- 功耗
+
+### GC影响
+
+- 异步执行GC的线程(HeapTaskDeamon), 会占用大量CPU时间片或抢占大核, 导致主线程无法被即时调度(CPU时间片变少、线程状态频繁切换、从大核切到小核), 从而影响App启动速度和页面流畅度。
+- 复制算法GC。导致CPU缓存失效, 代码执行效率降低。
+
+#### GC时锁竞争
+GC过程中获取一些锁, 会导致主线程锁等待。
+
+> Lock contention on GC barrier lock (owner tid 0)
+
+
+内存使用越高, App进程的CPU使用率越高, 从而导致功耗变高。
+
+## 线上内存监控
+
+监控指标
+- OOM次数
+- Java内存使用情况
+- Native内存使用情况
+- Graphics内存使用情况
+
+### OOM次数
+通过自定义崩溃处理器Thread.UncaughtExceptionHandler来完成。
+- 先判断崩溃类型OOM
+- 记录当前内存使用数据并上报
+- 为线程注册崩溃处理器
+
+### 不同OOM类型
+Runtime和Debug等API获取Java内存使用情况
+
+通过Debug.MemoryInfo#getMemoryStats()可以获取三种OOM类型的物理内存使用情况
+
+### 后台杀掉如何监控？
+
+LMK次数。
+从Android11开始可以获取App上次退出的信息的API:
+```kotlin
+ActivityManager.getHistoricalProcessExitReasons()
+```
+
+App退出原因(LMK->REASON_LOW_MEMORY)、进程优先级、物理内存等信息
+
+#### 是否是低内存设备
+
+ActivityManager.isLowRamDevice();
+
+小于1G为true
+
+#### 进程重要性
+与oom_score很接近的替代方案: ActivityManager.getMyMemoryState获取App优先级。
+
+
+## 启动优化
+
+App启动耗时每减少1s, 用户流失率减少6.9%。
 
 [art_gc]: ./art/art_gc.png
 
