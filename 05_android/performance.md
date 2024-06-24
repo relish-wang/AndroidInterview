@@ -15,3 +15,27 @@
     - shrinkResources true // 移除未使用的资源
     - resConfig "en", "zh" // 仅保留中文和英文的资源(包括依赖的其他库也会剔除其他语言的资源); 屏幕密度、方向、语言、Android版本等。
 
+
+# 帧率监控
+
+腾讯的matrix。
+
+- 7.0以下设备
+
+在帧率这部分，Matrix 创新性的 hook 了 Choreographer 的 CallbackQueue，同时还通过反射调用 addCallbackLocked 在每一个回调队列的头部添加了自定义的 FrameCallback。如果回调了这个 Callback，那么这一帧的渲染也就开始了，当前在 Looper 中正在执行的消息就是渲染的消息。这样除了监控帧率外，还能监控到当前帧的各个阶段耗时数据。
+除此之外，帧率回调和 Looper 的 Printer 结合使用，能够在出现卡顿帧的时候去 dump 主线程信息，便于业务方解决卡顿，但是频繁拼接字符串会带来一定的性能开销（println 方法调用时有字符串拼接）。
+
+> 利用Choreographer的postcallback方法接口轮询方式，能够对帧率进行统计。
+
+- 7.0及以上设备
+Window.addOnFrameMetricsAvailableListener
+
+## 滑动帧率监控
+
+View里如果有滑动行为产生最终都会调用到**onScrollChanged()**,
+当该方法调用的时候，会将mAttachInfo的mViewScrollChanged值设为true
+
+如上代码ViewRootImpl的draw方法会如果check到mAttachInfo.
+mViewScrollChanged值为true就会就会调用
+ViewTreeObserver的dispatchOnScrollChanged()方法，
+只要我们在viewTreeObserver设置监听，就能获取到界面是否正在滑动这一重要事件。

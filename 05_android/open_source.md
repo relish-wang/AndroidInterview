@@ -86,3 +86,14 @@ Glide的特点：
 - OkHttp和Volley的支持: 默认采用HttpUrlConnection作为网络协议栈
 
 - 动画的支持：新增支持图片的淡入淡出动画效果
+
+## Litho
+
+异步加载布局(提前异步测量和布局UI), 改View为Drawable。
+
+Android主线程加载UI, Litho异步加载。
+为什么Android要在主线程加载? 避免不同线程操作UI, 造成UI错乱。
+Litho异步加载怎么解决这样的问题？不变性。
+不变还怎么修改UI? 数据量单向流动, 有改变就重建, 传入新的参数？。
+
+提前布局可以减少帧率波动, 减少滑动卡顿。
